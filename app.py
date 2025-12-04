@@ -139,7 +139,11 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     return pdf.output(dest='S').encode('latin-1', 'replace')
 
 # --- INTERFACCIA ---
-st.sidebar.image("logo.jpg", use_column_width=True) if os.path.exists("logo.jpg") else None
+
+# CORREZIONE QUI: Mostriamo il logo solo se esiste, senza stampare scritte strane
+if os.path.exists("logo.jpg"):
+    st.sidebar.image("logo.jpg", use_column_width=True)
+
 st.sidebar.title("NAVIGAZIONE")
 menu = st.sidebar.radio("Vai a:", ["🧮 Calcolatore", "📂 Archivio"])
 st.sidebar.markdown("---")
