@@ -5,30 +5,87 @@ import datetime
 import math
 import os
 
-# --- 1. CONFIGURAZIONE ---
+# --- 1. CONFIGURAZIONE "APP MOBILE" ---
 icona_app = "logo.png" if os.path.exists("logo.png") else "logo.jpg"
 if not os.path.exists(icona_app): icona_app = None 
 
-st.set_page_config(page_title="App Piastrellista", page_icon=icona_app, layout="wide", initial_sidebar_state="collapsed")
+# USARE "CENTERED" è il segreto per farla sembrare un'app sul telefono
+st.set_page_config(page_title="App Piastrellista", page_icon=icona_app, layout="centered", initial_sidebar_state="collapsed")
 
-# Gestione Stato
+# Memoria dell'App
 if 'pagina' not in st.session_state: st.session_state['pagina'] = "home"
 if 'archivio' not in st.session_state: st.session_state['archivio'] = []
 if 'ditta' not in st.session_state:
     st.session_state['ditta'] = { "nome": "La Tua Ditta", "indirizzo": "", "citta": "", "piva": "", "tel": "", "email": "", "iban": "", "logo": None }
 
-# --- 2. CARICAMENTO CSS ESTERNO (Nuova Funzione) ---
-def carica_css(nome_file):
-    with open(nome_file) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+# --- 2. GRAFICA "TOTAL BLACK & WHITE BORDER" (Come la tua foto) ---
+st.markdown("""
+<style>
+    /* SFONDO NERO TOTALE */
+    .stApp { background-color: #000000 !important; }
+    
+    /* NASCONDI SIDEBAR E MENU IN ALTO */
+    [data-testid="stSidebar"] { display: none; }
+    [data-testid="collapsedControl"] { display: none; }
+    #MainMenu { display: none; }
+    footer { display: none; }
 
-# Se il file style.css esiste su GitHub/Server, caricalo
-if os.path.exists("style.css"):
-    carica_css("style.css")
+    /* TESTI BIANCHI */
+    h1, h2, h3, p, div, label, span { 
+        color: #ffffff !important; 
+        font-family: sans-serif;
+    }
+
+    /* PULSANTI MENU PRINCIPALE (Stile della tua foto) */
+    .stButton > button {
+        width: 100% !important;
+        height: 70px !important;
+        background-color: #000000 !important; /* Sfondo Nero */
+        color: #ffffff !important; /* Scritta Bianca */
+        border: 2px solid #ffffff !important; /* BORDO BIANCO */
+        border-radius: 15px !important; /* Angoli arrotondati */
+        font-size: 22px !important;
+        font-weight: bold !important;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    .stButton > button:active { 
+        background-color: #ffffff !important; 
+        color: #000000 !important; 
+    }
+
+    /* CASELLE DI TESTO (Input) */
+    input[type="text"], input[type="number"] {
+        font-size: 20px !important;
+        background-color: #111111 !important;
+        color: #ffffff !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+    }
+    
+    /* ETICHETTE SOPRA LE CASELLE */
+    label p { font-size: 18px !important; font-weight: normal; margin-bottom: 2px; }
+
+    /* RISULTATI (Metriche) */
+    div[data-testid="stMetric"] {
+        background-color: #111111 !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+    }
+    div[data-testid="stMetricValue"] { font-size: 30px !important; color: white !important; }
+
+    /* LOGO NON TAGLIATO */
+    img { max-width: 100%; object-fit: contain; }
+
+</style>
+""", unsafe_allow_html=True)
 
 # --- FUNZIONI ---
-def vai(pagina):
-    st.session_state['pagina'] = pagina
+def vai(dove):
+    st.session_state['pagina'] = dove
     st.rerun()
 
 def pulisci(val): return 0.0 if val is None else val
@@ -91,40 +148,87 @@ def crea_pdf(preventivo, cliente, totale):
     return pdf.output(dest='S').encode('latin-1', 'replace')
 
 # =======================================================
-# PAGINA 1: HOME (MENU A CUBI)
+# PAGINA 1: HOME (MENU PRINCIPALE)
 # =======================================================
 if st.session_state['pagina'] == "home":
     
+    # LOGO (Se caricato in Dati Ditta, usa quello, altrimenti default)
     if st.session_state['ditta']['logo']:
         st.image(st.session_state['ditta']['logo'], use_column_width=True)
     elif os.path.exists("logo.png"):
         st.image("logo.png", use_column_width=True)
+    elif os.path.exists("logo.jpg"):
+        st.image("logo.jpg", use_column_width=True)
     
-    st.title("MENU PRINCIPALE")
-    
+    st.write("") # Spazio vuoto
+    st.markdown("<h3 style='text-align: center;'>MENU PRINCIPALE</h3>", unsafe_allow_html=True)
+    st.write("") # Spazio vuoto
+
+    # I 3 PULSANTONI
     if st.button("📝 NUOVO PREVENTIVO"): vai("calcola")
     if st.button("📂 ARCHIVIO LAVORI"): vai("archivio")
-    if st.button("⚙️ DATI DITTA"): vai("settings") 
+    if st.button("⚙️ DATI DITTA & LOGO"): vai("settings") 
 
 # =======================================================
-# PAGINA 2: CALCOLA (TUTTO VERTICALE)
+# PAGINA 2: IMPOSTAZIONI (Dati Ditta)
+# =======================================================
+elif st.session_state['pagina'] == "settings":
+    if st.button("⬅ TORNA AL MENU"): vai("home")
+    
+    st.title("DATI DELLA TUA DITTA")
+    st.info("Questi dati e il logo appariranno nell'intestazione del PDF.")
+    
+    d = st.session_state['ditta']
+    
+    # Caricamento Logo
+    st.write("Carica il tuo logo:")
+    uploaded_logo = st.file_uploader("Scegli immagine", label_visibility="collapsed")
+    if uploaded_logo:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+            tmp.write(uploaded_logo.getvalue())
+            d['logo'] = tmp.name
+            st.success("Logo caricato!")
+    
+    # Campi Dati
+    d['nome'] = st.text_input("Nome Ditta", d['nome'])
+    d['indirizzo'] = st.text_input("Indirizzo Sede", d['indirizzo'])
+    d['citta'] = st.text_input("Città", d['citta'])
+    d['piva'] = st.text_input("Partita IVA", d['piva'])
+    d['tel'] = st.text_input("Telefono", d['tel'])
+    d['email'] = st.text_input("Email", d['email'])
+    
+    if st.button("💾 SALVA DATI"):
+        st.session_state['ditta'] = d
+        st.success("Dati salvati!")
+        vai("home")
+
+# =======================================================
+# PAGINA 3: CALCOLA PREVENTIVO
 # =======================================================
 elif st.session_state['pagina'] == "calcola":
-    if st.button("⬅ HOME"): vai("home")
+    if st.button("⬅ TORNA AL MENU"): vai("home")
     
-    st.header("1. CLIENTE")
+    st.title("CALCOLA & POSA")
+    
+    # Sezione Cliente
+    st.subheader("1. CLIENTE")
     c_nome = st.text_input("Nome Cliente")
     c_cantiere = st.text_input("Indirizzo Cantiere")
     
-    st.header("2. MISURE STANZA")
+    st.markdown("---")
+    
+    # Sezione Misure (UNA SOTTO L'ALTRA per evitare zoom)
+    st.subheader("2. MISURE")
     l = st.number_input("Lunghezza (metri)", step=0.1)
     w = st.number_input("Larghezza (metri)", step=0.1)
-    
     mq = l * w
+    
     if mq > 0:
         st.metric("SUPERFICIE", f"{mq:.2f} mq")
         
-        st.header("3. MATERIALI")
+        st.markdown("---")
+        st.subheader("3. MATERIALI")
+        
         st.write("Formato Piastrella:")
         fmt = st.selectbox("Seleziona", ["60x60", "30x30", "20x120", "80x80", "Altro"], label_visibility="collapsed")
         
@@ -135,32 +239,35 @@ elif st.session_state['pagina'] == "calcola":
             p = fmt.split(" ")[0].split("x")
             la, lb = float(p[0]), float(p[1])
             
-        st.write("Sfrido / Posa:")
-        tipo_posa = st.radio("Scegli:", ["Dritta (10%)", "Diagonale (15%)"], label_visibility="collapsed")
+        st.write("Tipo di Posa:")
+        tipo_posa = st.radio("Scegli", ["Dritta (10% Sfrido)", "Diagonale (15% Sfrido)"], label_visibility="collapsed")
         sfrido = 10 if "Dritta" in tipo_posa else 15
-        
         mq_tot = mq * (1 + sfrido/100)
         
-        mq_box = st.number_input("Mq per scatola (vedi confezione)", value=1.44)
+        st.write("Mq in una scatola (vedi pacco):")
+        mq_box = st.number_input("Mq Pacco", value=1.44)
         box = math.ceil(mq_tot / mq_box) if mq_box > 0 else 0
         
-        st.metric("SCATOLE DA ORDINARE", f"{box}", f"Totale: {mq_tot:.2f} mq")
+        st.metric("SCATOLE DA ORDINARE", f"{box}", delta=f"Totale: {mq_tot:.2f} mq")
         
         st.write("---")
-        st.write("Colla:")
+        st.subheader("COLLA")
         cons = stima_colla(la, lb)
         sacchi = math.ceil((mq * cons) / 25)
-        st.metric("SACCHI COLLA (25kg)", f"{sacchi}")
+        st.metric("SACCHI (25kg)", f"{sacchi}")
         
-        st.header("4. PREZZI (€)")
+        st.markdown("---")
+        st.subheader("4. PREZZI (€)")
+        
         pr_mat = st.number_input("Prezzo Piastrella (al mq)")
         pr_posa = st.number_input("Prezzo Posa (al mq)")
         pr_colla = st.number_input("Prezzo Colla (al sacco)", value=25.0)
         
         st.write("---")
+        
         if st.button("💾 CALCOLA E SALVA"):
             if not c_nome:
-                st.error("Manca nome cliente!")
+                st.error("Inserisci il nome del cliente!")
             else:
                 tot_mat = (box * mq_box) * pr_mat
                 tot_posa = mq * pr_posa
@@ -173,48 +280,26 @@ elif st.session_state['pagina'] == "calcola":
                     {"desc": f"Colla ({sacchi} sc.)", "qta": str(sacchi), "prezzo": pr_colla, "totale": tot_colla}
                 ]
                 
-                pdf_data = crea_pdf(voci, {"nome":c_nome, "cantiere":c_cantiere}, totale)
+                pdf_data = crea_pdf(voci, st.session_state['ditta'], {"nome":c_nome, "cantiere":c_cantiere}, totale)
                 
                 st.session_state['archivio'].append({"cli": c_nome, "tot": totale, "pdf": pdf_data})
+                
                 st.success(f"TOTALE: € {totale:.2f}")
-                st.download_button("SCARICA PDF", pdf_data, f"{c_nome}.pdf", "application/pdf")
+                st.download_button("📥 SCARICA PDF", pdf_data, f"{c_nome}.pdf", "application/pdf")
 
 # =======================================================
-# PAGINA 3: ARCHIVIO
+# PAGINA 4: ARCHIVIO
 # =======================================================
 elif st.session_state['pagina'] == "archivio":
-    if st.button("⬅ HOME"): vai("home")
-    st.title("ARCHIVIO")
+    if st.button("⬅ TORNA AL MENU"): vai("home")
+    
+    st.title("ARCHIVIO LAVORI")
     
     if not st.session_state['archivio']:
-        st.write("Nessun preventivo.")
+        st.write("Nessun preventivo salvato.")
     
     for item in reversed(st.session_state['archivio']):
         st.write("---")
         st.subheader(item['cli'])
         st.write(f"Totale: € {item['tot']:.2f}")
-        st.download_button("SCARICA", item['pdf'], key=str(item))
-
-# =======================================================
-# PAGINA 4: SETTINGS
-# =======================================================
-elif st.session_state['pagina'] == "settings":
-    if st.button("⬅ SALVA E ESCI"): vai("home")
-    
-    st.title("DATI DITTA")
-    st.info("Inserisci qui i tuoi dati per l'intestazione")
-    
-    d = st.session_state['ditta']
-    
-    new_logo = st.file_uploader("Logo")
-    if new_logo:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-            tmp.write(new_logo.getvalue())
-            d['logo'] = tmp.name
-            
-    d['nome'] = st.text_input("Nome Ditta", d['nome'])
-    d['indirizzo'] = st.text_input("Indirizzo", d['indirizzo'])
-    d['citta'] = st.text_input("Città", d['citta'])
-    d['piva'] = st.text_input("P.IVA", d['piva'])
-    d['tel'] = st.text_input("Telefono", d['tel'])
-    st.session_state['ditta'] = d
+        st.download_button("SCARICA PDF", item['pdf'], key=str(item))
