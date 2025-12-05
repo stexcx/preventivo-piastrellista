@@ -6,66 +6,87 @@ import math
 import os
 
 # --- CONFIGURAZIONE ---
-# Gestione icona app
 icona_app = "logo.png" if os.path.exists("logo.png") else "logo.jpg"
 if not os.path.exists(icona_app): icona_app = None 
 
-st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="wide")
+# IMPORTANTE: Usiamo "centered" invece di "wide" per i cellulari, 
+# ma via CSS forzeremo l'uso intelligente dello spazio.
+st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="centered")
 
 if 'archivio_preventivi' not in st.session_state:
     st.session_state['archivio_preventivi'] = []
 
-# --- CSS PERFEZIONATO PER MOBILE E VISIBILITÀ ---
+# --- CSS AVANZATO PER MOBILE ---
 st.markdown("""
 <style>
-    /* 1. BARRA LATERALE (SIDEBAR) */
-    [data-testid="stSidebar"] { 
-        background-color: #0e2b48; 
-    }
-    
-    /* Testi bianchi nella sidebar */
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
-        color: white !important;
-        font-size: 16px;
+    /* 1. OTTIMIZZAZIONE SPAZI MOBILE */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        max-width: 100%;
     }
 
-    /* 2. MENU DI NAVIGAZIONE PIÙ GRANDE */
+    /* 2. SIDEBAR MIGLIORATA */
+    [data-testid="stSidebar"] { 
+        background-color: #0e2b48;
+        width: 300px !important; /* Forza larghezza fissa per lasciare spazio di chiusura */
+    }
+    
+    /* Testi sidebar */
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div {
+        color: white !important;
+    }
+    
+    /* Pulsante chiusura finto per aiutare l'utente */
+    .close-sidebar-hint {
+        color: #bbb !important;
+        font-size: 12px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    /* 3. MENU DI NAVIGAZIONE BOTTONI GRANDI */
     div[role="radiogroup"] label {
-        padding: 15px 10px; /* Più spazio per il dito */
-        background-color: rgba(255,255,255,0.1); /* Leggero sfondo ai bottoni */
-        margin-bottom: 5px;
-        border-radius: 10px;
+        padding: 15px;
+        background-color: rgba(255,255,255,0.1);
+        margin-bottom: 8px;
+        border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.2);
+        width: 100%; /* Occupa tutto lo spazio */
     }
     div[role="radiogroup"] label p {
-        font-size: 22px !important; /* Testo Molto Grande */
+        font-size: 20px !important;
         font-weight: bold;
+        text-align: center;
     }
 
-    /* 3. RISULTATI (METRICHE) - FIX BIANCO SU BIANCO */
+    /* 4. RISULTATI (METRICHE) BEN VISIBILI */
     div[data-testid="stMetric"] {
-        background-color: #fff8e1 !important; /* Giallo chiarissimo */
+        background-color: #fff8e1 !important; /* Giallo chiaro */
         border: 2px solid #ffb300; /* Bordo Arancione */
-        border-radius: 10px;
-        padding: 15px;
-        color: black !important; /* Forza testo nero */
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 10px;
+        text-align: center; /* Centra il testo nel box */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
-    /* Il numero del risultato (es. 25 mq) */
     div[data-testid="stMetricValue"] {
-        color: #000000 !important; /* NERO ASSOLUTO */
-        font-size: 28px !important;
+        color: #000000 !important;
+        font-size: 32px !important; /* Numero gigante */
         font-weight: bold;
     }
     
-    /* L'etichetta (es. Superficie) */
     div[data-testid="stMetricLabel"] {
-        color: #e65100 !important; /* Arancione scuro */
-        font-weight: bold;
+        color: #e65100 !important;
+        font-size: 16px !important;
     }
 
-    /* 4. TITOLI E BOTTONI */
-    h1, h2, h3 { color: #e67e22; }
+    /* 5. TITOLI E PULSANTI */
+    h1 { text-align: center; color: #e67e22; font-size: 2.5rem; }
+    h2, h3 { color: #e67e22; }
     
     div.stButton > button { 
         background-color: #e67e22; 
@@ -73,22 +94,27 @@ st.markdown("""
         border: none; 
         font-weight: bold; 
         width: 100%; 
-        padding: 15px; 
-        font-size: 20px; /* Bottone calcola grande */
-        border-radius: 12px;
+        padding: 18px; 
+        font-size: 22px; 
+        border-radius: 15px;
+        margin-top: 20px;
+        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4);
     }
     div.stButton > button:hover { background-color: #d35400; color: white; }
 
     /* Logo centrato */
     [data-testid="stSidebar"] img {
-        display: block; margin-left: auto; margin-right: auto; max-width: 90%;
+        display: block; margin-left: auto; margin-right: auto; max-width: 80%;
     }
+    
+    /* Nasconde footer fastidioso */
+    footer {visibility: hidden;}
+    
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNZIONI UTILI ---
-def pulisci_num(valore):
-    return 0.0 if valore is None else valore
+# --- FUNZIONI ---
+def pulisci_num(valore): return 0.0 if valore is None else valore
 
 def stima_colla(lato_a, lato_b):
     lato_a, lato_b = pulisci_num(lato_a), pulisci_num(lato_b)
@@ -98,7 +124,6 @@ def stima_colla(lato_a, lato_b):
     elif area_cmq <= 3600: return 5.5
     else: return 7.0
 
-# --- CLASSE PDF ---
 class PDF(FPDF):
     def header(self): pass
 
@@ -193,16 +218,16 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
 # --- INTERFACCIA ---
 
-# 1. MOSTRA LOGO
+# SIDEBAR (LOGO + MENU)
+st.sidebar.markdown("<p class='close-sidebar-hint'>tocca a destra per chiudere ⮕</p>", unsafe_allow_html=True)
+
 if os.path.exists("logo.png"):
     st.sidebar.image("logo.png", use_column_width=True)
 elif os.path.exists("logo.jpg"):
     st.sidebar.image("logo.jpg", use_column_width=True)
 
-st.sidebar.title("NAVIGAZIONE")
-
-# 2. MENU RINOMINATO E GRANDI ICONE (Grazie al CSS sopra)
-menu = st.sidebar.radio("Vai a:", ["🧮 Calcola", "📂 Archivio"])
+st.sidebar.title("MENU")
+menu = st.sidebar.radio("", ["🧮 Calcola", "📂 Archivio"])
 st.sidebar.markdown("---")
 
 st.sidebar.header("🛠️ Dati Azienda")
@@ -228,115 +253,118 @@ dati_azienda = {
 
 # === SEZIONE CALCOLA ===
 if menu == "🧮 Calcola":
-    st.title("Nuovo Preventivo")
+    st.title("Calcola & Posa")
 
-    # DATI CLIENTE (Tastiera lettere)
-    with st.expander("👤 Dati Cliente Completi", expanded=True):
-        col_a1, col_a2 = st.columns(2)
-        c_nome = col_a1.text_input("Nome/Ragione Sociale")
-        c_cf = col_a2.text_input("Codice Fiscale / P.IVA")
+    # DATI CLIENTE
+    with st.expander("👤 Dati Cliente (Clicca qui)", expanded=True):
+        c_nome = st.text_input("Nome Cliente / Ragione Sociale")
+        c_cantiere = st.text_input("Cantiere (Indirizzo)")
         
-        col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
-        c_indirizzo = col_b1.text_input("Indirizzo")
-        c_citta = col_b2.text_input("Città")
-        c_cap = col_b3.text_input("CAP")
-        
-        col_c1, col_c2 = st.columns(2)
-        c_tel = col_c1.text_input("Telefono")
-        c_cantiere = col_c2.text_input("Cantiere (se diverso)")
-        if not c_cantiere: c_cantiere = f"{c_indirizzo}, {c_citta}"
+        # Dati avanzati nascosti per non intasare su mobile
+        if st.checkbox("Mostra altri campi (CF, Indirizzo completo)"):
+            col_a1, col_a2 = st.columns(2)
+            c_cf = col_a1.text_input("Codice Fiscale / P.IVA")
+            c_tel = col_a2.text_input("Telefono")
+            c_indirizzo = st.text_input("Indirizzo Residenza")
+            col_b1, col_b2 = st.columns(2)
+            c_citta = col_b1.text_input("Città")
+            c_cap = col_b2.text_input("CAP")
+        else:
+            c_cf, c_tel, c_indirizzo, c_citta, c_cap = "", "", "", "", ""
 
-    # MISURE (Tastiera Numerica Automatica su Mobile)
-    st.subheader("1. Misure Ambiente")
-    col_m1, col_m2, col_m3 = st.columns(3)
-    
-    # st.number_input apre automaticamente il tastierino numerico sul telefono
+    st.markdown("---")
+
+    # 1. MISURE AMBIENTE (Layout a 2 colonne, non 3)
+    st.subheader("1. Misure")
+    col_m1, col_m2 = st.columns(2)
     lunghezza = col_m1.number_input("Lunghezza (m)", value=None, step=0.1, placeholder="0.00")
     larghezza = col_m2.number_input("Larghezza (m)", value=None, step=0.1, placeholder="0.00")
     
     mq_netti = pulisci_num(lunghezza) * pulisci_num(larghezza)
     
-    # Questo risultato ora sarà GIALLO/ARANCIONE e ben visibile
-    col_m3.metric("📏 Superficie", f"{mq_netti:.2f} mq")
+    # Risultato GRANDE e CENTRATO sotto
+    st.metric("Superficie Totale", f"{mq_netti:.2f} mq")
     
     st.markdown("---")
 
-    # MATERIALI
+    # 2. MATERIALI
     st.subheader("2. Materiali")
+    
     if mq_netti > 0:
-        col_mat1, col_mat2 = st.columns(2)
-        with col_mat1:
-            st.markdown("**Piastrelle**")
-            formato = st.selectbox("Formato", ["60x60", "30x30", "20x120 (Legno)", "80x80", "120x120", "Altro"])
-            if formato == "Altro":
-                lato_a = st.number_input("Lato A (cm)", value=None, placeholder="0")
-                lato_b = st.number_input("Lato B (cm)", value=None, placeholder="0")
-            else:
-                p = formato.split(" ")[0].split("x")
-                lato_a, lato_b = float(p[0]), float(p[1])
-            
-            tipo_posa = st.radio("Posa", ["Dritta (Sfrido 10%)", "Diagonale (Sfrido 15%)"], horizontal=True)
-            sfrido = 10 if "Dritta" in tipo_posa else 15
-            mq_nec = mq_netti + (mq_netti * sfrido / 100)
-            
-            mq_pacco = st.number_input("Mq in 1 Pacco", value=None, step=0.01, placeholder="Es. 1.44")
-            mq_pacco_c = pulisci_num(mq_pacco)
-            
-            if mq_pacco_c > 0:
-                pacchi = math.ceil(mq_nec / mq_pacco_c)
-                mq_tot_acquisto = pacchi * mq_pacco_c
-                st.info(f"Fabbisogno: {mq_nec:.2f} mq")
-                st.metric("📦 Pacchi", f"{pacchi}", f"Tot: {mq_tot_acquisto:.2f} mq")
-            else:
-                pacchi, mq_tot_acquisto = 0, 0
+        # Sezione Piastrelle
+        st.write("🧱 **Piastrelle**")
+        formato = st.selectbox("Formato", ["60x60", "30x30", "20x120 (Legno)", "80x80", "120x120", "Altro"])
+        
+        if formato == "Altro":
+            c_f1, c_f2 = st.columns(2)
+            lato_a = c_f1.number_input("Lato A (cm)", value=None, placeholder="0")
+            lato_b = c_f2.number_input("Lato B (cm)", value=None, placeholder="0")
+        else:
+            p = formato.split(" ")[0].split("x")
+            lato_a, lato_b = float(p[0]), float(p[1])
+        
+        tipo_posa = st.radio("Tipo Posa", ["Dritta (Sfrido 10%)", "Diagonale (Sfrido 15%)"], horizontal=True)
+        sfrido = 10 if "Dritta" in tipo_posa else 15
+        mq_nec = mq_netti + (mq_netti * sfrido / 100)
+        
+        mq_pacco = st.number_input("Mq in 1 Pacco", value=None, step=0.01, placeholder="Es. 1.44")
+        mq_pacco_c = pulisci_num(mq_pacco)
+        
+        if mq_pacco_c > 0:
+            pacchi = math.ceil(mq_nec / mq_pacco_c)
+            mq_tot_acquisto = pacchi * mq_pacco_c
+            # Risultato Pacchi ben visibile
+            st.info(f"Fabbisogno tot: {mq_nec:.2f} mq")
+            st.metric("📦 Pacchi da Ordinare", f"{pacchi} pz", f"Totale merce: {mq_tot_acquisto:.2f} mq")
+        else:
+            pacchi, mq_tot_acquisto = 0, 0
 
-        with col_mat2:
-            st.markdown("**Colla**")
-            cons = stima_colla(lato_a, lato_b)
-            kg_tot = mq_netti * cons
-            sacchi = math.ceil(kg_tot / 25)
-            st.write(f"Consumo: **{cons} kg/mq**")
-            st.metric("Sacchi (25kg)", f"{sacchi}", f"Tot: {sacchi*25} kg")
+        st.markdown("") # Spazio
+
+        # Sezione Colla
+        st.write("🧪 **Colla**")
+        cons = stima_colla(lato_a, lato_b)
+        kg_tot = mq_netti * cons
+        sacchi = math.ceil(kg_tot / 25)
+        st.metric("Sacchi (25kg)", f"{sacchi}", f"Totale: {sacchi*25} kg (Consumo {cons} kg/mq)")
 
         st.markdown("---")
 
-        # COSTI
+        # 3. COSTI
         st.subheader("3. Costi")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown("**Piastrelle**")
-            modo_p = st.radio("Prezzo:", ["Al Mq", "Al Pacco"])
-            prezzo_p = st.number_input("Costo Piastrella (€)", value=None, step=1.0, placeholder="0.00")
-            prezzo_p_c = pulisci_num(prezzo_p)
-            if modo_p == "Al Mq":
-                tot_p = mq_tot_acquisto * prezzo_p_c
-                desc_p = f"Fornitura ({pacchi} pacchi da {mq_pacco_c}mq)"
-            else:
-                tot_p = pacchi * prezzo_p_c
-                desc_p = f"Fornitura ({pacchi} pacchi)"
-            st.caption(f"Tot: € {tot_p:.2f}")
+        
+        # Piastrelle
+        col_p1, col_p2 = st.columns(2)
+        modo_p = col_p1.radio("Prezzo Piastrella:", ["Al Mq", "Al Pacco"])
+        prezzo_p = col_p2.number_input("Costo (€)", value=None, step=1.0, placeholder="0.00")
+        prezzo_p_c = pulisci_num(prezzo_p)
+        if modo_p == "Al Mq":
+            tot_p = mq_tot_acquisto * prezzo_p_c
+            desc_p = f"Fornitura ({pacchi} pacchi da {mq_pacco_c}mq)"
+        else:
+            tot_p = pacchi * prezzo_p_c
+            desc_p = f"Fornitura ({pacchi} pacchi)"
+        
+        # Manodopera
+        st.write("🔨 **Manodopera**")
+        prezzo_m = st.number_input("Costo Posa al Mq (€)", value=None, step=1.0, placeholder="0.00")
+        prezzo_m_c = pulisci_num(prezzo_m)
+        tot_m = mq_netti * prezzo_m_c
+        
+        # Colla
+        st.write("🧪 **Colla**")
+        col_c1, col_c2 = st.columns(2)
+        modo_c = col_c1.radio("Prezzo Colla:", ["Al Sacco", "Al Mq"])
+        prezzo_c = col_c2.number_input("Costo (€)", value=None, step=0.5, placeholder="0.00")
+        prezzo_c_c = pulisci_num(prezzo_c)
+        if modo_c == "Al Sacco":
+            tot_c = sacchi * prezzo_c_c
+            desc_c = f"Colla ({sacchi} sacchi)"
+        else:
+            tot_c = mq_netti * prezzo_c_c
+            desc_c = f"Materiale Consumo (Stima {mq_netti}mq)"
 
-        with c2:
-            st.markdown("**Manodopera**")
-            prezzo_m = st.number_input("Costo Posa al Mq (€)", value=None, step=1.0, placeholder="0.00")
-            prezzo_m_c = pulisci_num(prezzo_m)
-            tot_m = mq_netti * prezzo_m_c
-            st.caption(f"Tot: € {tot_m:.2f}")
-
-        with c3:
-            st.markdown("**Colla**")
-            modo_c = st.radio("Prezzo:", ["Al Sacco", "Al Mq"])
-            prezzo_c = st.number_input("Costo Colla (€)", value=None, step=0.5, placeholder="0.00")
-            prezzo_c_c = pulisci_num(prezzo_c)
-            if modo_c == "Al Sacco":
-                tot_c = sacchi * prezzo_c_c
-                desc_c = f"Colla ({sacchi} sacchi)"
-            else:
-                tot_c = mq_netti * prezzo_c_c
-                desc_c = f"Materiale Consumo (Stima {mq_netti}mq)"
-            st.caption(f"Tot: € {tot_c:.2f}")
-
-        # CALCOLA
+        # BOTTONE FINALE
         if st.button("CALCOLA E GENERA PREVENTIVO 🚀"):
             if not c_nome:
                 st.error("Inserisci il nome del cliente!")
@@ -359,10 +387,11 @@ if menu == "🧮 Calcola":
                 rec = {"data": datetime.datetime.now().strftime("%d/%m/%Y"), "cliente": c_nome, "totale": tot_gen, "pdf": pdf_bytes}
                 st.session_state['archivio_preventivi'].append(rec)
                 
-                st.success(f"Totale: € {tot_gen:.2f}")
+                st.balloons()
+                st.success(f"Totale Preventivo: € {tot_gen:.2f}")
                 st.download_button("📥 SCARICA PDF", pdf_bytes, f"Prev_{c_nome}.pdf", "application/pdf")
     else:
-        st.info("Inserisci le misure per iniziare.")
+        st.info("Inserisci le misure per calcolare i materiali.")
 
 elif menu == "📂 Archivio":
     st.title("📂 Archivio")
