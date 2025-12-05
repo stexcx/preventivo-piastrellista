@@ -14,103 +14,109 @@ st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="cen
 if 'archivio_preventivi' not in st.session_state:
     st.session_state['archivio_preventivi'] = []
 
-# --- CSS "ALTA LEGGIBILITÀ" (TUTTO PIÙ GRANDE) ---
+# --- CSS STILE "BIANCO E NERO" (ALTO CONTRASTO) ---
 st.markdown("""
 <style>
-    /* 1. TESTO GENERALE GIGANTE */
+    /* 1. TESTO GENERALE - FORZA IL NERO SU SFONDO BIANCO */
     html, body, [class*="css"] {
-        font-size: 22px !important; /* Scritta base molto grande */
+        font-family: Arial, sans-serif;
+        color: #000000 !important; /* Nero Puro */
+        font-size: 22px !important;
     }
 
-    /* 2. TITOLI */
-    h1 { font-size: 45px !important; color: #e67e22; text-align: center; }
-    h2 { font-size: 35px !important; color: #e67e22; }
-    h3 { font-size: 30px !important; color: #e67e22; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-top: 30px; }
+    /* 2. BARRA LATERALE (SIDEBAR) - NERO SU BIANCO */
+    [data-testid="stSidebar"] { 
+        background-color: #000000 !important; /* Sfondo Nero Assoluto */
+    }
+    
+    /* Tutto il testo nella sidebar deve essere BIANCO PURO */
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #ffffff !important; /* Bianco Puro */
+    }
 
-    /* 3. INPUT (CASELLE DOVE SCRIVI) */
-    /* Etichette sopra le caselle */
+    /* 3. TITOLI PAGINA PRINCIPALE - NERI */
+    h1, h2, h3 { 
+        color: #000000 !important; 
+        font-weight: 900 !important; /* Molto grassetto */
+    }
+    
+    h3 {
+        border-bottom: 3px solid #000000; /* Linea nera spessa */
+        padding-bottom: 10px;
+    }
+
+    /* 4. ETICHETTE (Labels) SOPRA LE CASELLE - NERE */
     .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
         font-size: 24px !important;
         font-weight: bold;
-        color: #0e2b48 !important;
+        color: #000000 !important;
     }
     
-    /* Il testo che scrivi dentro */
+    /* Testo dentro le caselle (Input) */
     input {
-        font-size: 26px !important;
-        height: 60px !important; /* Casella più alta per dita grandi */
-        color: #333 !important;
-    }
-    
-    /* Testo dentro i menu a tendina */
-    div[data-baseweb="select"] span {
-        font-size: 24px !important;
-    }
-
-    /* 4. SIDEBAR (MENU LATERALE) */
-    [data-testid="stSidebar"] { 
-        background-color: #0e2b48;
-        width: 320px !important;
-    }
-    [data-testid="stSidebar"] label, [data-testid="stSidebar"] span, [data-testid="stSidebar"] p {
-        color: white !important;
-        font-size: 20px !important; /* Scritte menu grandi */
-    }
-    
-    /* Pulsanti scelta menu laterale */
-    div[role="radiogroup"] label {
-        padding: 20px;
-        background-color: rgba(255,255,255,0.15);
-        margin-bottom: 15px;
-        border-radius: 15px;
-        border: 2px solid rgba(255,255,255,0.3);
-    }
-    div[role="radiogroup"] label p {
-        font-size: 26px !important; /* ICONE MENU GIGANTI */
+        color: #000000 !important;
         font-weight: bold;
     }
 
-    /* 5. RISULTATI (BOX GIALLI) */
+    /* 5. MENU LATERALE (BOTTONI) */
+    div[role="radiogroup"] label {
+        background-color: #333333 !important; /* Grigio scuro per contrasto */
+        border: 2px solid #ffffff;
+        margin-bottom: 10px;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: #555555 !important;
+    }
+
+    /* 6. RISULTATI (BOX) - BIANCO CON BORDO NERO */
     div[data-testid="stMetric"] {
-        background-color: #fff8e1 !important;
-        border: 3px solid #ffb300;
-        border-radius: 20px;
+        background-color: #ffffff !important;
+        border: 4px solid #000000 !important; /* Bordo Nero Spesso */
+        border-radius: 15px;
         padding: 20px;
         margin: 20px 0;
         text-align: center;
+        box-shadow: 5px 5px 0px #000000; /* Ombra netta nera */
     }
     div[data-testid="stMetricValue"] {
-        font-size: 50px !important; /* NUMERO RISULTATO ENORME */
-        font-weight: bold;
-        color: black !important;
+        font-size: 50px !important;
+        font-weight: 900;
+        color: #000000 !important;
     }
     div[data-testid="stMetricLabel"] {
         font-size: 24px !important;
-        color: #e65100 !important;
+        font-weight: bold;
+        color: #000000 !important;
+        text-decoration: underline;
     }
 
-    /* 6. BOTTONE CALCOLA */
+    /* 7. BOTTONI - NERI CON SCRITTA BIANCA */
     div.stButton > button { 
-        background-color: #e67e22; 
-        color: white; 
-        border: none; 
+        background-color: #000000 !important; 
+        color: #ffffff !important; 
+        border: 2px solid #000000; 
         font-weight: bold; 
         width: 100%; 
-        padding: 25px; /* Pulsante molto alto */
-        font-size: 30px !important; /* Scritta pulsante gigante */
-        border-radius: 20px;
-        margin-top: 30px;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        padding: 20px; 
+        font-size: 28px !important;
+        border-radius: 15px;
+        margin-top: 20px;
     }
-    div.stButton > button:hover { background-color: #d35400; }
+    div.stButton > button:hover { 
+        background-color: #333333 !important; 
+        border-color: #333333;
+    }
     
-    /* Nasconde footer */
+    /* Footer nascosto */
     footer {visibility: hidden;}
-    
-    /* Logo Sidebar */
-    [data-testid="stSidebar"] img {
-        margin-bottom: 20px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -147,11 +153,11 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     start_x = 45 
     pdf.set_xy(start_x, 10)
     pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(14, 43, 72) 
+    pdf.set_text_color(0, 0, 0) # Nero
     pdf.cell(0, 8, dati_azienda['nome_azienda'], ln=True)
     
     pdf.set_font("Arial", size=9)
-    pdf.set_text_color(50, 50, 50) 
+    pdf.set_text_color(0, 0, 0) # Nero
     pdf.set_x(start_x)
     pdf.cell(0, 5, f"{dati_azienda['indirizzo']} - {dati_azienda['citta']}", ln=True)
     pdf.set_x(start_x)
@@ -160,7 +166,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 5, f"Email: {dati_azienda['email']}", ln=True)
     
     pdf.ln(10)
-    pdf.set_draw_color(230, 126, 34) 
+    pdf.set_draw_color(0, 0, 0) # Linea Nera
     pdf.set_line_width(1)
     pdf.line(10, 45, 200, 45)
 
@@ -168,7 +174,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 11)
     pdf.set_text_color(0, 0, 0)
-    pdf.set_fill_color(240, 240, 240)
+    pdf.set_fill_color(240, 240, 240) # Grigio chiaro sfondo
     pdf.cell(0, 8, f" Spett.le Cliente: {dati_cliente['nome']}", ln=True, fill=True)
     
     pdf.set_font("Arial", size=10)
@@ -184,9 +190,9 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 6, f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}", ln=True)
     pdf.ln(5)
 
-    # TABELLA
-    pdf.set_fill_color(14, 43, 72) 
-    pdf.set_text_color(255, 255, 255)
+    # TABELLA (Bianco e Nero)
+    pdf.set_fill_color(0, 0, 0) # Intestazione Nera
+    pdf.set_text_color(255, 255, 255) # Testo Bianco
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(90, 10, "Descrizione", 1, 0, 'L', 1)
     pdf.cell(30, 10, "Quantita'", 1, 0, 'C', 1)
@@ -194,7 +200,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(40, 10, "Totale", 1, 1, 'C', 1)
 
     pdf.set_font("Arial", size=10)
-    pdf.set_text_color(0, 0, 0)
+    pdf.set_text_color(0, 0, 0) # Testo Nero
     
     for voce in dati_preventivo:
         pdf.cell(90, 10, voce['desc'], 1)
@@ -206,20 +212,20 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     
     # TOTALE
     pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(230, 126, 34)
+    pdf.set_text_color(0, 0, 0) # Nero
     pdf.cell(150, 10, "TOTALE STIMATO:", 0, 0, 'R')
     pdf.cell(40, 10, f"Euro {totali:.2f}", 1, 1, 'C')
     
     pdf.ln(20)
     pdf.set_font("Arial", 'I', 8)
-    pdf.set_text_color(100, 100, 100)
+    pdf.set_text_color(50, 50, 50)
     pdf.cell(0, 10, "I prezzi si intendono IVA esclusa.", ln=True, align='C')
     
     return pdf.output(dest='S').encode('latin-1', 'replace')
 
 # --- INTERFACCIA ---
 
-st.sidebar.markdown("<p style='text-align:center; color:#bbb;'>tocca ➡ per chiudere</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='text-align:center; color:#fff;'>tocca ➡ per chiudere</p>", unsafe_allow_html=True)
 
 if os.path.exists("logo.png"):
     st.sidebar.image("logo.png", use_column_width=True)
