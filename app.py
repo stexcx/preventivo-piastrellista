@@ -6,18 +6,35 @@ import math
 import os
 
 # --- CONFIGURAZIONE ---
-st.set_page_config(page_title="Calcola & Posa", page_icon="logo.jpg", layout="wide")
+# Cerchiamo di usare il logo trasparente come icona, se c'è
+icona_app = "logo.png" if os.path.exists("logo.png") else "logo.jpg"
+if not os.path.exists(icona_app): icona_app = None # Fallback se non c'è nulla
 
-# CSS: Stile Blu/Arancione
+st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="wide")
+
+# CSS: Stile Blu/Arancione + FIX LOGO
 st.markdown("""
 <style>
+    /* Colori Sidebar */
     [data-testid="stSidebar"] { background-color: #0e2b48; color: white; }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div, [data-testid="stSidebar"] span { color: white !important; }
     [data-testid="stSidebar"] input { color: #333 !important; }
+    
+    /* Titoli principali */
     h1, h2, h3 { color: #e67e22; }
+    
+    /* Stile pulsanti e metriche */
     div.stMetric { background-color: #fcfcfc; padding: 10px; border-radius: 8px; border-left: 5px solid #e67e22; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
     div.stButton > button { background-color: #e67e22; color: white; border: none; font-weight: bold; width: 100%; padding: 10px; font-size: 18px;}
     div.stButton > button:hover { background-color: #d35400; color: white; }
+
+    /* Fix per centrare il logo nella sidebar */
+    [data-testid="stSidebar"] img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 80%; /* Riduce leggermente il logo per non toccare i bordi */
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,48 +61,42 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf = PDF()
     pdf.add_page()
     
-    # --- 1. INTESTAZIONE AZIENDA COMPLETA ---
-    # Logo
+    # --- LOGO NEL PDF ---
+    # Priorità al PNG caricato, poi al JPG caricato, poi al logo.png default, poi logo.jpg
+    logo_da_stampare = None
     if dati_azienda['logo_path'] and os.path.exists(dati_azienda['logo_path']):
-        try: pdf.image(dati_azienda['logo_path'], 10, 8, 30) 
-        except: pass
+        logo_da_stampare = dati_azienda['logo_path']
+    elif os.path.exists("logo.png"):
+        logo_da_stampare = "logo.png"
     elif os.path.exists("logo.jpg"):
-         try: pdf.image("logo.jpg", 10, 8, 30)
-         except: pass
+        logo_da_stampare = "logo.jpg"
 
-    # Dati Testuali (Allineati a destra del logo)
-    start_x = 45 # Punto di inizio testo dopo il logo
-    
+    if logo_da_stampare:
+        try: pdf.image(logo_da_stampare, 10, 8, 30) 
+        except: pass
+
+    # INTESTAZIONE TESTO
+    start_x = 45 
     pdf.set_xy(start_x, 10)
     pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(14, 43, 72) # Blu
+    pdf.set_text_color(14, 43, 72) 
     pdf.cell(0, 8, dati_azienda['nome_azienda'], ln=True)
     
     pdf.set_font("Arial", size=9)
-    pdf.set_text_color(50, 50, 50) # Grigio scuro
-    
-    # Indirizzo
+    pdf.set_text_color(50, 50, 50) 
     pdf.set_x(start_x)
     pdf.cell(0, 5, f"{dati_azienda['indirizzo']} - {dati_azienda['citta']}", ln=True)
-    
-    # Piva e Tel
     pdf.set_x(start_x)
     pdf.cell(0, 5, f"P.IVA: {dati_azienda['piva']} | Tel: {dati_azienda['telefono']}", ln=True)
-    
-    # Email e IBAN
     pdf.set_x(start_x)
     pdf.cell(0, 5, f"Email: {dati_azienda['email']}", ln=True)
     
-    if dati_azienda['iban']:
-        pdf.set_x(start_x)
-        pdf.cell(0, 5, f"IBAN: {dati_azienda['iban']}", ln=True)
-
     pdf.ln(10)
-    pdf.set_draw_color(230, 126, 34) # Arancione
+    pdf.set_draw_color(230, 126, 34) 
     pdf.set_line_width(1)
     pdf.line(10, 45, 200, 45)
 
-    # --- 2. DATI CLIENTE ---
+    # DATI CLIENTE
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 11)
     pdf.set_text_color(0, 0, 0)
@@ -105,7 +116,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 6, f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}", ln=True)
     pdf.ln(5)
 
-    # --- 3. TABELLA ---
+    # TABELLA
     pdf.set_fill_color(14, 43, 72) 
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 10)
@@ -125,7 +136,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
     pdf.ln(5)
     
-    # --- 4. TOTALE ---
+    # TOTALE
     pdf.set_font("Arial", 'B', 14)
     pdf.set_text_color(230, 126, 34)
     pdf.cell(150, 10, "TOTALE STIMATO:", 0, 0, 'R')
@@ -140,20 +151,22 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
 # --- INTERFACCIA ---
 
-# QUI C'ERA L'ERRORE: Ora è corretto!
-if os.path.exists("logo.jpg"):
+# MOSTRA IL LOGO TRASPARENTE
+if os.path.exists("logo.png"):
+    st.sidebar.image("logo.png", use_column_width=True)
+elif os.path.exists("logo.jpg"):
     st.sidebar.image("logo.jpg", use_column_width=True)
 
 st.sidebar.title("NAVIGAZIONE")
 menu = st.sidebar.radio("Vai a:", ["🧮 Calcolatore", "📂 Archivio"])
 st.sidebar.markdown("---")
 
-# --- NUOVA SIDEBAR CON DATI COMPLETI ---
-st.sidebar.header("🛠️ Dati Azienda (Completi)")
-st.sidebar.info("Questi dati appariranno nell'intestazione del PDF")
+# --- SIDEBAR CON DATI COMPLETI ---
+st.sidebar.header("🛠️ Dati Azienda")
+st.sidebar.info("Dati per l'intestazione del PDF")
 
-logo_in = st.sidebar.file_uploader("Carica Logo", type=['png','jpg'])
-d_nome = st.sidebar.text_input("Nome Ditta / Ragione Sociale", "Edil Rossi")
+logo_in = st.sidebar.file_uploader("Carica Logo (PNG/JPG)", type=['png','jpg'])
+d_nome = st.sidebar.text_input("Nome Ditta", "Edil Rossi")
 d_indirizzo = st.sidebar.text_input("Indirizzo Sede", "Via Roma 1")
 d_citta = st.sidebar.text_input("Città e CAP", "16100 Genova (GE)")
 d_piva = st.sidebar.text_input("P.IVA / C.F.", "IT00000000000")
@@ -167,15 +180,11 @@ if logo_in:
         tmp.write(logo_in.getvalue())
         logo_path = tmp.name
 
-# Raccogliamo tutti i dati in un dizionario
 dati_azienda = {
     "nome_azienda": d_nome, 
-    "indirizzo": d_indirizzo,
-    "citta": d_citta,
-    "piva": d_piva, 
-    "telefono": d_tel, 
-    "email": d_email,
-    "iban": d_iban,
+    "indirizzo": d_indirizzo, "citta": d_citta,
+    "piva": d_piva, "telefono": d_tel, 
+    "email": d_email, "iban": d_iban,
     "logo_path": logo_path
 }
 
@@ -183,36 +192,33 @@ dati_azienda = {
 if menu == "🧮 Calcolatore":
     st.title("Nuovo Preventivo")
 
-    # 1. CLIENTE (Form Completo)
+    # DATI CLIENTE
     with st.expander("👤 Dati Cliente Completi", expanded=True):
         col_a1, col_a2 = st.columns(2)
-        c_nome = col_a1.text_input("Nome/Ragione Sociale Cliente")
+        c_nome = col_a1.text_input("Nome/Ragione Sociale")
         c_cf = col_a2.text_input("Codice Fiscale / P.IVA")
         
         col_b1, col_b2, col_b3 = st.columns([2, 1, 1])
-        c_indirizzo = col_b1.text_input("Via e N. Civico")
+        c_indirizzo = col_b1.text_input("Indirizzo")
         c_citta = col_b2.text_input("Città")
         c_cap = col_b3.text_input("CAP")
         
         col_c1, col_c2 = st.columns(2)
         c_tel = col_c1.text_input("Telefono")
-        c_cantiere = col_c2.text_input("Indirizzo Cantiere (se diverso)")
+        c_cantiere = col_c2.text_input("Cantiere (se diverso)")
         if not c_cantiere: c_cantiere = f"{c_indirizzo}, {c_citta}"
 
-    # 2. MISURE (Input Smart)
+    # MISURE
     st.subheader("1. Misure Ambiente")
     col_m1, col_m2, col_m3 = st.columns(3)
-    
     lunghezza = col_m1.number_input("Lunghezza (m)", value=None, step=0.1, placeholder="0.00")
     larghezza = col_m2.number_input("Larghezza (m)", value=None, step=0.1, placeholder="0.00")
     
-    l_calc = pulisci_num(lunghezza)
-    w_calc = pulisci_num(larghezza)
-    mq_netti = l_calc * w_calc
+    mq_netti = pulisci_num(lunghezza) * pulisci_num(larghezza)
     col_m3.metric("📏 Superficie", f"{mq_netti:.2f} mq")
     st.markdown("---")
 
-    # 3. MATERIALI
+    # MATERIALI
     st.subheader("2. Materiali")
     if mq_netti > 0:
         col_mat1, col_mat2 = st.columns(2)
@@ -251,7 +257,7 @@ if menu == "🧮 Calcolatore":
 
         st.markdown("---")
 
-        # 4. COSTI
+        # COSTI
         st.subheader("3. Costi")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -290,7 +296,7 @@ if menu == "🧮 Calcolatore":
         # CALCOLA
         if st.button("CALCOLA E GENERA PREVENTIVO 🚀"):
             if not c_nome:
-                st.error("Manca il nome del cliente!")
+                st.error("Inserisci il nome del cliente!")
             else:
                 tot_gen = tot_p + tot_m + tot_c
                 voci = [
@@ -312,7 +318,6 @@ if menu == "🧮 Calcolatore":
                 
                 st.success(f"Totale: € {tot_gen:.2f}")
                 st.download_button("📥 SCARICA PDF", pdf_bytes, f"Prev_{c_nome}.pdf", "application/pdf")
-
     else:
         st.info("Inserisci le misure per iniziare.")
 
