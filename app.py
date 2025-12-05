@@ -140,7 +140,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
 # --- INTERFACCIA ---
 
-# CORREZIONE QUI: Mostriamo il logo solo se esiste, senza stampare scritte strane
+# QUI C'ERA L'ERRORE: Ora è corretto!
 if os.path.exists("logo.jpg"):
     st.sidebar.image("logo.jpg", use_column_width=True)
 
