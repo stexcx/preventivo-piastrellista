@@ -6,40 +6,85 @@ import math
 import os
 
 # --- CONFIGURAZIONE ---
-# Cerchiamo di usare il logo trasparente come icona, se c'è
+# Gestione icona app
 icona_app = "logo.png" if os.path.exists("logo.png") else "logo.jpg"
-if not os.path.exists(icona_app): icona_app = None # Fallback se non c'è nulla
+if not os.path.exists(icona_app): icona_app = None 
 
 st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="wide")
 
-# CSS: Stile Blu/Arancione + FIX LOGO
+if 'archivio_preventivi' not in st.session_state:
+    st.session_state['archivio_preventivi'] = []
+
+# --- CSS PERFEZIONATO PER MOBILE E VISIBILITÀ ---
 st.markdown("""
 <style>
-    /* Colori Sidebar */
-    [data-testid="stSidebar"] { background-color: #0e2b48; color: white; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div, [data-testid="stSidebar"] span { color: white !important; }
-    [data-testid="stSidebar"] input { color: #333 !important; }
+    /* 1. BARRA LATERALE (SIDEBAR) */
+    [data-testid="stSidebar"] { 
+        background-color: #0e2b48; 
+    }
     
-    /* Titoli principali */
+    /* Testi bianchi nella sidebar */
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+        color: white !important;
+        font-size: 16px;
+    }
+
+    /* 2. MENU DI NAVIGAZIONE PIÙ GRANDE */
+    div[role="radiogroup"] label {
+        padding: 15px 10px; /* Più spazio per il dito */
+        background-color: rgba(255,255,255,0.1); /* Leggero sfondo ai bottoni */
+        margin-bottom: 5px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    div[role="radiogroup"] label p {
+        font-size: 22px !important; /* Testo Molto Grande */
+        font-weight: bold;
+    }
+
+    /* 3. RISULTATI (METRICHE) - FIX BIANCO SU BIANCO */
+    div[data-testid="stMetric"] {
+        background-color: #fff8e1 !important; /* Giallo chiarissimo */
+        border: 2px solid #ffb300; /* Bordo Arancione */
+        border-radius: 10px;
+        padding: 15px;
+        color: black !important; /* Forza testo nero */
+    }
+    
+    /* Il numero del risultato (es. 25 mq) */
+    div[data-testid="stMetricValue"] {
+        color: #000000 !important; /* NERO ASSOLUTO */
+        font-size: 28px !important;
+        font-weight: bold;
+    }
+    
+    /* L'etichetta (es. Superficie) */
+    div[data-testid="stMetricLabel"] {
+        color: #e65100 !important; /* Arancione scuro */
+        font-weight: bold;
+    }
+
+    /* 4. TITOLI E BOTTONI */
     h1, h2, h3 { color: #e67e22; }
     
-    /* Stile pulsanti e metriche */
-    div.stMetric { background-color: #fcfcfc; padding: 10px; border-radius: 8px; border-left: 5px solid #e67e22; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
-    div.stButton > button { background-color: #e67e22; color: white; border: none; font-weight: bold; width: 100%; padding: 10px; font-size: 18px;}
+    div.stButton > button { 
+        background-color: #e67e22; 
+        color: white; 
+        border: none; 
+        font-weight: bold; 
+        width: 100%; 
+        padding: 15px; 
+        font-size: 20px; /* Bottone calcola grande */
+        border-radius: 12px;
+    }
     div.stButton > button:hover { background-color: #d35400; color: white; }
 
-    /* Fix per centrare il logo nella sidebar */
+    /* Logo centrato */
     [data-testid="stSidebar"] img {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        max-width: 80%; /* Riduce leggermente il logo per non toccare i bordi */
+        display: block; margin-left: auto; margin-right: auto; max-width: 90%;
     }
 </style>
 """, unsafe_allow_html=True)
-
-if 'archivio_preventivi' not in st.session_state:
-    st.session_state['archivio_preventivi'] = []
 
 # --- FUNZIONI UTILI ---
 def pulisci_num(valore):
@@ -61,21 +106,18 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf = PDF()
     pdf.add_page()
     
-    # --- LOGO NEL PDF ---
-    # Priorità al PNG caricato, poi al JPG caricato, poi al logo.png default, poi logo.jpg
+    # LOGO
     logo_da_stampare = None
     if dati_azienda['logo_path'] and os.path.exists(dati_azienda['logo_path']):
         logo_da_stampare = dati_azienda['logo_path']
-    elif os.path.exists("logo.png"):
-        logo_da_stampare = "logo.png"
-    elif os.path.exists("logo.jpg"):
-        logo_da_stampare = "logo.jpg"
+    elif os.path.exists("logo.png"): logo_da_stampare = "logo.png"
+    elif os.path.exists("logo.jpg"): logo_da_stampare = "logo.jpg"
 
     if logo_da_stampare:
         try: pdf.image(logo_da_stampare, 10, 8, 30) 
         except: pass
 
-    # INTESTAZIONE TESTO
+    # INTESTAZIONE
     start_x = 45 
     pdf.set_xy(start_x, 10)
     pdf.set_font("Arial", 'B', 16)
@@ -96,7 +138,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.set_line_width(1)
     pdf.line(10, 45, 200, 45)
 
-    # DATI CLIENTE
+    # CLIENTE
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 11)
     pdf.set_text_color(0, 0, 0)
@@ -151,20 +193,19 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
 # --- INTERFACCIA ---
 
-# MOSTRA IL LOGO TRASPARENTE
+# 1. MOSTRA LOGO
 if os.path.exists("logo.png"):
     st.sidebar.image("logo.png", use_column_width=True)
 elif os.path.exists("logo.jpg"):
     st.sidebar.image("logo.jpg", use_column_width=True)
 
 st.sidebar.title("NAVIGAZIONE")
-menu = st.sidebar.radio("Vai a:", ["🧮 Calcolatore", "📂 Archivio"])
+
+# 2. MENU RINOMINATO E GRANDI ICONE (Grazie al CSS sopra)
+menu = st.sidebar.radio("Vai a:", ["🧮 Calcola", "📂 Archivio"])
 st.sidebar.markdown("---")
 
-# --- SIDEBAR CON DATI COMPLETI ---
 st.sidebar.header("🛠️ Dati Azienda")
-st.sidebar.info("Dati per l'intestazione del PDF")
-
 logo_in = st.sidebar.file_uploader("Carica Logo (PNG/JPG)", type=['png','jpg'])
 d_nome = st.sidebar.text_input("Nome Ditta", "Edil Rossi")
 d_indirizzo = st.sidebar.text_input("Indirizzo Sede", "Via Roma 1")
@@ -181,18 +222,15 @@ if logo_in:
         logo_path = tmp.name
 
 dati_azienda = {
-    "nome_azienda": d_nome, 
-    "indirizzo": d_indirizzo, "citta": d_citta,
-    "piva": d_piva, "telefono": d_tel, 
-    "email": d_email, "iban": d_iban,
-    "logo_path": logo_path
+    "nome_azienda": d_nome, "indirizzo": d_indirizzo, "citta": d_citta,
+    "piva": d_piva, "telefono": d_tel, "email": d_email, "iban": d_iban, "logo_path": logo_path
 }
 
-# === CALCOLATORE ===
-if menu == "🧮 Calcolatore":
+# === SEZIONE CALCOLA ===
+if menu == "🧮 Calcola":
     st.title("Nuovo Preventivo")
 
-    # DATI CLIENTE
+    # DATI CLIENTE (Tastiera lettere)
     with st.expander("👤 Dati Cliente Completi", expanded=True):
         col_a1, col_a2 = st.columns(2)
         c_nome = col_a1.text_input("Nome/Ragione Sociale")
@@ -208,14 +246,19 @@ if menu == "🧮 Calcolatore":
         c_cantiere = col_c2.text_input("Cantiere (se diverso)")
         if not c_cantiere: c_cantiere = f"{c_indirizzo}, {c_citta}"
 
-    # MISURE
+    # MISURE (Tastiera Numerica Automatica su Mobile)
     st.subheader("1. Misure Ambiente")
     col_m1, col_m2, col_m3 = st.columns(3)
+    
+    # st.number_input apre automaticamente il tastierino numerico sul telefono
     lunghezza = col_m1.number_input("Lunghezza (m)", value=None, step=0.1, placeholder="0.00")
     larghezza = col_m2.number_input("Larghezza (m)", value=None, step=0.1, placeholder="0.00")
     
     mq_netti = pulisci_num(lunghezza) * pulisci_num(larghezza)
+    
+    # Questo risultato ora sarà GIALLO/ARANCIONE e ben visibile
     col_m3.metric("📏 Superficie", f"{mq_netti:.2f} mq")
+    
     st.markdown("---")
 
     # MATERIALI
