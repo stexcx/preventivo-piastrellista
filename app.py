@@ -9,7 +9,6 @@ import os
 icona_app = "logo.png" if os.path.exists("logo.png") else "logo.jpg"
 if not os.path.exists(icona_app): icona_app = None 
 
-# Impostiamo layout="wide" per occupare tutto lo schermo del telefono
 st.set_page_config(page_title="App Piastrellista", page_icon=icona_app, layout="wide", initial_sidebar_state="collapsed")
 
 # Gestione Stato
@@ -18,78 +17,14 @@ if 'archivio' not in st.session_state: st.session_state['archivio'] = []
 if 'ditta' not in st.session_state:
     st.session_state['ditta'] = { "nome": "La Tua Ditta", "indirizzo": "", "citta": "", "piva": "", "tel": "", "email": "", "iban": "", "logo": None }
 
-# --- 2. CSS PER "EFFETTO APP" (NO ZOOM, NO BORDI) ---
-st.markdown("""
-<style>
-    /* RESET TOTALE SPAZI */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 5rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        max-width: 100%;
-    }
-    
-    /* SFONDO NERO E TESTO BIANCO */
-    .stApp { background-color: #000000; }
-    h1, h2, h3, p, div, label, span { 
-        color: #ffffff !important; 
-        font-family: sans-serif;
-    }
+# --- 2. CARICAMENTO CSS ESTERNO (Nuova Funzione) ---
+def carica_css(nome_file):
+    with open(nome_file) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    /* TITOLI GRANDI */
-    h1 { font-size: 28px !important; text-align: center; margin-bottom: 20px; }
-    h3 { border-bottom: 1px solid #444; padding-bottom: 5px; margin-top: 20px; font-size: 22px !important; }
-
-    /* INPUT GIGANTI (Evita che il telefono zoomi quando clicchi) */
-    input[type="text"], input[type="number"] {
-        font-size: 20px !important; /* Dimensione minima per evitare zoom su iPhone */
-        background-color: #111111 !important;
-        color: #ffffff !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 12px !important;
-        padding: 15px !important;
-        height: 60px !important; /* Casella alta facile da toccare */
-    }
-    
-    /* Etichette sopra le caselle */
-    label p { font-size: 18px !important; font-weight: bold; margin-bottom: 5px; }
-
-    /* PULSANTI MENU (CUBETTONI) */
-    .stButton > button {
-        width: 100%;
-        height: 80px !important;
-        background-color: #222222 !important;
-        color: #ffffff !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 15px;
-        font-size: 22px !important;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    /* Pulsante attivo */
-    .stButton > button:active { background-color: #ffffff !important; color: #000000 !important; }
-
-    /* RISULTATI IN EVIDENZA */
-    div[data-testid="stMetric"] {
-        background-color: #111111 !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 10px;
-        padding: 10px;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    div[data-testid="stMetricValue"] { font-size: 32px !important; color: white !important; }
-    div[data-testid="stMetricLabel"] { font-size: 16px !important; color: #ccc !important; }
-
-    /* NASCONDI COSE INUTILI */
-    [data-testid="stSidebar"] { display: none; }
-    [data-testid="collapsedControl"] { display: none; }
-    footer { display: none; }
-    #MainMenu { display: none; }
-    
-</style>
-""", unsafe_allow_html=True)
+# Se il file style.css esiste su GitHub/Server, caricalo
+if os.path.exists("style.css"):
+    carica_css("style.css")
 
 # --- FUNZIONI ---
 def vai(pagina):
@@ -160,7 +95,6 @@ def crea_pdf(preventivo, cliente, totale):
 # =======================================================
 if st.session_state['pagina'] == "home":
     
-    # Logo Centrale
     if st.session_state['ditta']['logo']:
         st.image(st.session_state['ditta']['logo'], use_column_width=True)
     elif os.path.exists("logo.png"):
@@ -168,7 +102,6 @@ if st.session_state['pagina'] == "home":
     
     st.title("MENU PRINCIPALE")
     
-    # Pulsanti uno sotto l'altro (Verticali, per il pollice)
     if st.button("📝 NUOVO PREVENTIVO"): vai("calcola")
     if st.button("📂 ARCHIVIO LAVORI"): vai("archivio")
     if st.button("⚙️ DATI DITTA"): vai("settings") 
@@ -184,7 +117,6 @@ elif st.session_state['pagina'] == "calcola":
     c_cantiere = st.text_input("Indirizzo Cantiere")
     
     st.header("2. MISURE STANZA")
-    # Impilati verticalmente, non affiancati, per evitare zoom
     l = st.number_input("Lunghezza (metri)", step=0.1)
     w = st.number_input("Larghezza (metri)", step=0.1)
     
@@ -203,7 +135,6 @@ elif st.session_state['pagina'] == "calcola":
             p = fmt.split(" ")[0].split("x")
             la, lb = float(p[0]), float(p[1])
             
-        # Radio button verticale è meglio su mobile
         st.write("Sfrido / Posa:")
         tipo_posa = st.radio("Scegli:", ["Dritta (10%)", "Diagonale (15%)"], label_visibility="collapsed")
         sfrido = 10 if "Dritta" in tipo_posa else 15
