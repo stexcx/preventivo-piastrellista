@@ -14,109 +14,94 @@ st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="cen
 if 'archivio_preventivi' not in st.session_state:
     st.session_state['archivio_preventivi'] = []
 
-# --- CSS STILE "BIANCO E NERO" (ALTO CONTRASTO) ---
+# --- CSS ALTO CONTRASTO (FIX DEFINITIVO VISIBILITÀ) ---
 st.markdown("""
 <style>
-    /* 1. TESTO GENERALE - FORZA IL NERO SU SFONDO BIANCO */
-    html, body, [class*="css"] {
-        font-family: Arial, sans-serif;
-        color: #000000 !important; /* Nero Puro */
-        font-size: 22px !important;
+    /* 1. FORZARE SFONDO BIANCO SU TUTTA L'APP (ignora tema scuro telefono) */
+    .stApp {
+        background-color: #ffffff !important;
     }
 
-    /* 2. BARRA LATERALE (SIDEBAR) - NERO SU BIANCO */
+    /* 2. BARRA LATERALE (SIDEBAR) - NERO TOTAL */
     [data-testid="stSidebar"] { 
-        background-color: #000000 !important; /* Sfondo Nero Assoluto */
+        background-color: #000000 !important; 
+    }
+    [data-testid="stSidebar"] * {
+        color: #ffffff !important; /* Tutto bianco nella sidebar */
+    }
+
+    /* 3. CASELLE DI INPUT (Dove scrivi) - FIX VISIBILITÀ */
+    /* Lo sfondo della casella deve essere BIANCO */
+    div[data-baseweb="input"] {
+        background-color: #ffffff !important;
+        border: 2px solid #000000 !important; /* Bordo Nero */
+        border-radius: 8px !important;
     }
     
-    /* Tutto il testo nella sidebar deve essere BIANCO PURO */
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] label, 
-    [data-testid="stSidebar"] div,
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: #ffffff !important; /* Bianco Puro */
+    /* Il testo che scrivi deve essere NERO */
+    input[type="text"], input[type="number"] {
+        color: #000000 !important;
+        caret-color: #000000 !important; /* Cursore nero */
+        font-size: 20px !important;
+        font-weight: bold !important;
+    }
+    
+    /* Il testo fantasma (Placeholder) deve essere GRIGIO SCURO (leggibile) */
+    ::placeholder {
+        color: #555555 !important;
+        opacity: 1 !important;
+        font-weight: normal !important;
+    }
+    
+    /* Le ETICHETTE sopra le caselle (es. "Lunghezza stanza") */
+    label, .stInput > label {
+        color: #000000 !important; /* Nere */
+        font-size: 22px !important; /* Grandi */
+        font-weight: 900 !important; /* Molto Grassetto */
+        margin-bottom: 5px !important;
     }
 
-    /* 3. TITOLI PAGINA PRINCIPALE - NERI */
+    /* 4. MENU A TENDINA (Selectbox) */
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 2px solid #000000 !important;
+        color: #000000 !important;
+    }
+    div[data-baseweb="select"] span {
+        color: #000000 !important;
+        font-size: 20px !important;
+    }
+
+    /* 5. TITOLI */
     h1, h2, h3 { 
         color: #000000 !important; 
-        font-weight: 900 !important; /* Molto grassetto */
+        font-weight: 900 !important;
     }
     
-    h3 {
-        border-bottom: 3px solid #000000; /* Linea nera spessa */
-        padding-bottom: 10px;
-    }
-
-    /* 4. ETICHETTE (Labels) SOPRA LE CASELLE - NERE */
-    .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
-        font-size: 24px !important;
-        font-weight: bold;
-        color: #000000 !important;
-    }
-    
-    /* Testo dentro le caselle (Input) */
-    input {
-        color: #000000 !important;
-        font-weight: bold;
-    }
-
-    /* 5. MENU LATERALE (BOTTONI) */
-    div[role="radiogroup"] label {
-        background-color: #333333 !important; /* Grigio scuro per contrasto */
-        border: 2px solid #ffffff;
-        margin-bottom: 10px;
-        padding: 15px;
-        border-radius: 10px;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: #555555 !important;
-    }
-
-    /* 6. RISULTATI (BOX) - BIANCO CON BORDO NERO */
+    /* 6. RISULTATI E METRICHE */
     div[data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border: 4px solid #000000 !important; /* Bordo Nero Spesso */
+        background-color: #f0f0f0 !important; /* Grigio chiarissimo */
+        border: 4px solid #000000 !important;
+        color: #000000 !important;
         border-radius: 15px;
-        padding: 20px;
-        margin: 20px 0;
-        text-align: center;
-        box-shadow: 5px 5px 0px #000000; /* Ombra netta nera */
+        padding: 10px;
     }
-    div[data-testid="stMetricValue"] {
-        font-size: 50px !important;
-        font-weight: 900;
-        color: #000000 !important;
-    }
-    div[data-testid="stMetricLabel"] {
-        font-size: 24px !important;
-        font-weight: bold;
-        color: #000000 !important;
-        text-decoration: underline;
-    }
+    div[data-testid="stMetricValue"] { color: #000000 !important; font-size: 36px !important; }
+    div[data-testid="stMetricLabel"] { color: #000000 !important; font-weight: bold; }
 
-    /* 7. BOTTONI - NERI CON SCRITTA BIANCA */
+    /* 7. BOTTONI */
     div.stButton > button { 
         background-color: #000000 !important; 
         color: #ffffff !important; 
-        border: 2px solid #000000; 
-        font-weight: bold; 
-        width: 100%; 
-        padding: 20px; 
-        font-size: 28px !important;
-        border-radius: 15px;
-        margin-top: 20px;
-    }
-    div.stButton > button:hover { 
-        background-color: #333333 !important; 
-        border-color: #333333;
+        border: 3px solid #000000; 
+        font-size: 24px !important;
+        padding: 15px;
+        border-radius: 12px;
     }
     
-    /* Footer nascosto */
+    /* Nascondi footer */
     footer {visibility: hidden;}
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -153,11 +138,11 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     start_x = 45 
     pdf.set_xy(start_x, 10)
     pdf.set_font("Arial", 'B', 16)
-    pdf.set_text_color(0, 0, 0) # Nero
+    pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 8, dati_azienda['nome_azienda'], ln=True)
     
     pdf.set_font("Arial", size=9)
-    pdf.set_text_color(0, 0, 0) # Nero
+    pdf.set_text_color(0, 0, 0)
     pdf.set_x(start_x)
     pdf.cell(0, 5, f"{dati_azienda['indirizzo']} - {dati_azienda['citta']}", ln=True)
     pdf.set_x(start_x)
@@ -166,7 +151,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 5, f"Email: {dati_azienda['email']}", ln=True)
     
     pdf.ln(10)
-    pdf.set_draw_color(0, 0, 0) # Linea Nera
+    pdf.set_draw_color(0, 0, 0)
     pdf.set_line_width(1)
     pdf.line(10, 45, 200, 45)
 
@@ -174,7 +159,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 11)
     pdf.set_text_color(0, 0, 0)
-    pdf.set_fill_color(240, 240, 240) # Grigio chiaro sfondo
+    pdf.set_fill_color(240, 240, 240)
     pdf.cell(0, 8, f" Spett.le Cliente: {dati_cliente['nome']}", ln=True, fill=True)
     
     pdf.set_font("Arial", size=10)
@@ -190,9 +175,9 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 6, f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}", ln=True)
     pdf.ln(5)
 
-    # TABELLA (Bianco e Nero)
-    pdf.set_fill_color(0, 0, 0) # Intestazione Nera
-    pdf.set_text_color(255, 255, 255) # Testo Bianco
+    # TABELLA
+    pdf.set_fill_color(0, 0, 0)
+    pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(90, 10, "Descrizione", 1, 0, 'L', 1)
     pdf.cell(30, 10, "Quantita'", 1, 0, 'C', 1)
@@ -200,7 +185,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(40, 10, "Totale", 1, 1, 'C', 1)
 
     pdf.set_font("Arial", size=10)
-    pdf.set_text_color(0, 0, 0) # Testo Nero
+    pdf.set_text_color(0, 0, 0)
     
     for voce in dati_preventivo:
         pdf.cell(90, 10, voce['desc'], 1)
@@ -212,7 +197,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     
     # TOTALE
     pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(0, 0, 0) # Nero
+    pdf.set_text_color(0, 0, 0)
     pdf.cell(150, 10, "TOTALE STIMATO:", 0, 0, 'R')
     pdf.cell(40, 10, f"Euro {totali:.2f}", 1, 1, 'C')
     
@@ -225,7 +210,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
 
 # --- INTERFACCIA ---
 
-st.sidebar.markdown("<p style='text-align:center; color:#fff;'>tocca ➡ per chiudere</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='text-align:center;'>chiudi menu ➡</p>", unsafe_allow_html=True)
 
 if os.path.exists("logo.png"):
     st.sidebar.image("logo.png", use_column_width=True)
@@ -261,18 +246,21 @@ dati_azienda = {
 if menu == "🧮 Calcola":
     st.title("Calcola & Posa")
 
-    with st.expander("👤 Dati Cliente (Apri)", expanded=True):
-        c_nome = st.text_input("Nome Cliente")
-        c_cantiere = st.text_input("Cantiere")
+    # DATI CLIENTE
+    with st.expander("👤 DATI CLIENTE (Clicca per aprire)", expanded=True):
+        st.write("Inserisci i dati qui sotto:")
+        # Ho aggiunto placeholder specifici per aiutare la lettura
+        c_nome = st.text_input("Nome Cliente / Ditta", placeholder="Es. Mario Rossi")
+        c_cantiere = st.text_input("Cantiere / Luogo Lavoro", placeholder="Es. Via Garibaldi 3")
         
-        if st.checkbox("Mostra Dati Fiscali"):
-            c_cf = st.text_input("Codice Fiscale/P.IVA")
-            c_tel = st.text_input("Telefono Cliente")
-            c_indirizzo = st.text_input("Indirizzo Residenza")
-            c_citta = st.text_input("Città e CAP Cliente")
-            c_cap = ""
-        else:
-            c_cf, c_tel, c_indirizzo, c_citta, c_cap = "", "", "", "", ""
+        st.write("---")
+        st.write("Dati Fiscali (Facoltativi):")
+        c_cf = st.text_input("Codice Fiscale / P.IVA", placeholder="CF o Partita IVA")
+        c_tel = st.text_input("Telefono Cliente", placeholder="Numero di telefono")
+        c_indirizzo = st.text_input("Indirizzo Residenza", placeholder="Indirizzo completo")
+        col_cit, col_cap = st.columns(2)
+        c_citta = col_cit.text_input("Città", placeholder="Città")
+        c_cap = col_cap.text_input("CAP", placeholder="00000")
 
     st.markdown("---")
 
@@ -359,7 +347,7 @@ if menu == "🧮 Calcola":
         # BOTTONE FINALE
         if st.button("CALCOLA PREVENTIVO 🚀"):
             if not c_nome:
-                st.error("Inserisci il nome del cliente!")
+                st.error("Inserisci almeno il nome del cliente!")
             else:
                 tot_gen = tot_p + tot_m + tot_c
                 voci = [
