@@ -14,92 +14,107 @@ st.set_page_config(page_title="Calcola & Posa", page_icon=icona_app, layout="cen
 if 'archivio_preventivi' not in st.session_state:
     st.session_state['archivio_preventivi'] = []
 
-# --- CSS ALTO CONTRASTO (FIX DEFINITIVO VISIBILITÀ) ---
+# --- CSS TOTAL BLACK (Sfondo Nero, Scritte Bianche) ---
 st.markdown("""
 <style>
-    /* 1. FORZARE SFONDO BIANCO SU TUTTA L'APP (ignora tema scuro telefono) */
+    /* 1. SFONDO APP: NERO PURO */
     .stApp {
-        background-color: #ffffff !important;
+        background-color: #000000 !important;
     }
 
-    /* 2. BARRA LATERALE (SIDEBAR) - NERO TOTAL */
-    [data-testid="stSidebar"] { 
-        background-color: #000000 !important; 
-    }
-    [data-testid="stSidebar"] * {
-        color: #ffffff !important; /* Tutto bianco nella sidebar */
-    }
-
-    /* 3. CASELLE DI INPUT (Dove scrivi) - FIX VISIBILITÀ */
-    /* Lo sfondo della casella deve essere BIANCO */
-    div[data-baseweb="input"] {
-        background-color: #ffffff !important;
-        border: 2px solid #000000 !important; /* Bordo Nero */
-        border-radius: 8px !important;
+    /* 2. TESTI: TUTTI BIANCHI */
+    html, body, p, span, div, h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        font-family: Arial, sans-serif;
     }
     
-    /* Il testo che scrivi deve essere NERO */
+    /* Titoli grandi */
+    h1 { font-size: 3rem !important; font-weight: 900 !important; }
+    h2, h3 { border-bottom: 2px solid #ffffff; padding-bottom: 5px; }
+
+    /* 3. BARRA LATERALE: NERO SU NERO (Con bordo destro per stacco) */
+    [data-testid="stSidebar"] { 
+        background-color: #000000 !important; 
+        border-right: 1px solid #333333;
+    }
+
+    /* 4. CASELLE DI INPUT (Dove scrivi) */
+    /* Sfondo nero, Bordo Bianco, Scritta Bianca */
+    div[data-baseweb="input"] {
+        background-color: #000000 !important;
+        border: 2px solid #ffffff !important; 
+        border-radius: 10px !important;
+    }
+    
+    /* Il testo che scrivi */
     input[type="text"], input[type="number"] {
-        color: #000000 !important;
-        caret-color: #000000 !important; /* Cursore nero */
+        color: #ffffff !important;
+        font-size: 22px !important;
+        font-weight: bold !important;
+        caret-color: #ffffff !important; /* Cursore bianco */
+    }
+    
+    /* Etichette sopra le caselle */
+    label, .stInput > label {
+        color: #ffffff !important;
         font-size: 20px !important;
         font-weight: bold !important;
     }
-    
-    /* Il testo fantasma (Placeholder) deve essere GRIGIO SCURO (leggibile) */
-    ::placeholder {
-        color: #555555 !important;
-        opacity: 1 !important;
-        font-weight: normal !important;
-    }
-    
-    /* Le ETICHETTE sopra le caselle (es. "Lunghezza stanza") */
-    label, .stInput > label {
-        color: #000000 !important; /* Nere */
-        font-size: 22px !important; /* Grandi */
-        font-weight: 900 !important; /* Molto Grassetto */
-        margin-bottom: 5px !important;
-    }
 
-    /* 4. MENU A TENDINA (Selectbox) */
+    /* 5. MENU A TENDINA e RADIO BUTTONS */
     div[data-baseweb="select"] > div {
-        background-color: #ffffff !important;
-        border: 2px solid #000000 !important;
-        color: #000000 !important;
+        background-color: #000000 !important;
+        border: 2px solid #ffffff !important;
+        color: #ffffff !important;
     }
-    div[data-baseweb="select"] span {
-        color: #000000 !important;
-        font-size: 20px !important;
+    div[role="radiogroup"] label {
+        background-color: #1a1a1a !important; /* Grigio scurissimo quasi nero */
+        border: 1px solid #ffffff;
+        margin-bottom: 10px;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    div[role="radiogroup"] label:hover {
+        border-color: #aaaaaa;
     }
 
-    /* 5. TITOLI */
-    h1, h2, h3 { 
-        color: #000000 !important; 
-        font-weight: 900 !important;
-    }
-    
-    /* 6. RISULTATI E METRICHE */
+    /* 6. RISULTATI (BOX) */
     div[data-testid="stMetric"] {
-        background-color: #f0f0f0 !important; /* Grigio chiarissimo */
-        border: 4px solid #000000 !important;
-        color: #000000 !important;
+        background-color: #000000 !important;
+        border: 3px solid #ffffff !important; /* Bordo Bianco Spesso */
         border-radius: 15px;
-        padding: 10px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: center;
     }
-    div[data-testid="stMetricValue"] { color: #000000 !important; font-size: 36px !important; }
-    div[data-testid="stMetricLabel"] { color: #000000 !important; font-weight: bold; }
+    div[data-testid="stMetricValue"] {
+        font-size: 45px !important;
+        font-weight: 900;
+        color: #ffffff !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 20px !important;
+        font-weight: normal;
+        color: #cccccc !important; /* Bianco leggermente sporco per l'etichetta */
+    }
 
     /* 7. BOTTONI */
     div.stButton > button { 
         background-color: #000000 !important; 
         color: #ffffff !important; 
-        border: 3px solid #000000; 
-        font-size: 24px !important;
-        padding: 15px;
-        border-radius: 12px;
+        border: 3px solid #ffffff; 
+        font-size: 26px !important;
+        font-weight: bold;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 20px;
+    }
+    div.stButton > button:hover { 
+        background-color: #ffffff !important; 
+        color: #000000 !important; /* Diventa bianco con scritta nera se ci passi sopra */
     }
     
-    /* Nascondi footer */
+    /* Footer nascosto */
     footer {visibility: hidden;}
     
 </style>
@@ -175,7 +190,7 @@ def crea_pdf(dati_preventivo, dati_azienda, dati_cliente, totali):
     pdf.cell(0, 6, f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}", ln=True)
     pdf.ln(5)
 
-    # TABELLA
+    # TABELLA (Bianco e Nero)
     pdf.set_fill_color(0, 0, 0)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 10)
@@ -249,7 +264,6 @@ if menu == "🧮 Calcola":
     # DATI CLIENTE
     with st.expander("👤 DATI CLIENTE (Clicca per aprire)", expanded=True):
         st.write("Inserisci i dati qui sotto:")
-        # Ho aggiunto placeholder specifici per aiutare la lettura
         c_nome = st.text_input("Nome Cliente / Ditta", placeholder="Es. Mario Rossi")
         c_cantiere = st.text_input("Cantiere / Luogo Lavoro", placeholder="Es. Via Garibaldi 3")
         
